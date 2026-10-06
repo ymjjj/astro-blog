@@ -2,6 +2,78 @@
 
 这是本项目的操作说明，不依赖某个 Hermes 插件安装目录。让 Agent 读取此文件，或把它作为博客任务的固定上下文。标准 MCP 配置见 [接入指南](13-writing-and-agents.md)，也可以直接调用 CLI。
 
+## 已上线目标与一次性准备（2026-10-06）
+
+博客已上线到 <https://ymjjj.github.io/astro-blog/>，公开仓库为 `ymjjj/astro-blog`，分支为 `main`，工作流为 `deploy.yml`。首次上线通过 Git 与 GitHub Actions 完成；不等于 Hermes 的真实发布调用已经验收。
+
+当前 `.blog/publish.json` 已配置目标，并于 2026-10-06 根据用户指令设置为 `enabled:true`，CLI 已确认 `remoteEnabled:true`。GitHub CLI 已安装到 `%LOCALAPPDATA%\Programs\GitHub CLI` 并加入用户 PATH。登录状态与工作区状态会随环境变化，每次正式发布前仍需检查；远程开关开启不代表任意环境下都能成功发布。
+
+1. Agent 在同一台电脑上运行，能访问本项目目录，以及 Node、Git、GitHub CLI（`gh`）。如果运行在另一台主机，先准备该主机的工作副本、依赖、Git 身份、认证和本机发布配置，并修改所有绝对路径；不能直接使用 Windows 本机路径。
+2. 在运行 Agent 的操作系统账号下确保 `gh` 在 PATH。当前电脑已安装用户级 GitHub CLI；已运行的终端、工作台或 Agent 需要重启以继承新 PATH。首次部署的 `.cache/gh/runtime/bin/gh.exe` 仅为下载缓存，不应作为长期依赖路径。
+3. 通过浏览器登录 GitHub CLI，确认使用 `ymjjj`，不向对话或配置文件粘贴 Token：
+
+   ```powershell
+   gh auth login --hostname github.com --git-protocol https --web
+   gh auth status --hostname github.com
+   gh repo view ymjjj/astro-blog
+   ```
+
+   参考 [GitHub CLI 官方登录说明](https://cli.github.com/manual/gh_auth_login)。首次部署使用的 Git 凭据在尝试 `gh auth login --with-token` 时缺少 `read:org` scope，不应把临时部署方式当成长期登录已经完成。
+4. 用户确认这台 Agent 可以向上述目标发布后，将本机 `.blog/publish.json` 中的 `enabled` 改为 `true`，其余字段保留。这是一次性启用操作，不要每次发文重写配置；`configure` 或工作台保存配置会重新关闭远程。配置不得包含凭据，不得提交 `.blog`。
+5. 使用 `setup` / `config` 核对目标和开关，检查 Git 当前分支及 origin。远程发布会要求本地 HEAD 等于 origin/main，暂存区为空，工作区没有目标内容和图片以外的改动。文档或代码改动需先独立审查并同步，不能夹带在文章发布中；不要强推、清空工作区或擅自上传私人草稿来消除阻塞。
+
+每篇文章只有收到明确发布意图才使用 remote。用户只说“记下来”时默认草稿；上线目标授权不等于允许公开任意私人内容。
+
+## 最短接入方法：CLI
+
+Hermes 只要能执行本机命令就可以使用，不必先接 MCP，也不需要启动工作台。先运行这两个只读命令：
+
+```powershell
+node D:\projects\astro-blog\tools\blog\cli.mjs setup --root D:\projects\astro-blog --json
+node D:\projects\astro-blog\tools\blog\cli.mjs list --root D:\projects\astro-blog --json
+```
+
+有参数时使用 UTF-8 JSON 文件，存放在已忽略的 `.blog/agent-input/` 下；这类文件可能含未发表正文，不要写进会提交的 examples 或 docs。调用格式：
+
+```powershell
+node D:\projects\astro-blog\tools\blog\cli.mjs create --root D:\projects\astro-blog --input D:\projects\astro-blog\.blog\agent-input\create.json --json
+```
+
+新建文章的 JSON 示例（requestId 每个新操作生成一次 UUID，重试复用）：
+
+```json
+{
+  "kind": "posts",
+  "slug": "my-first-note",
+  "title": "我的第一篇笔记",
+  "description": "这篇笔记的简短摘要。",
+  "tags": ["笔记"],
+  "body": "## 今天学到的东西\n\n这里是正文。",
+  "requestId": "008e22bb-d4c7-43fd-af9e-052859ba3029"
+}
+```
+
+创建碎碎念用 `kind:"moments"`，可以省略 title/description。创建前先搜索，避免相同文章换 requestId 后重复新建。不要传 `draft:false`，create 默认创建草稿；真正上线由 publish 完成。
+
+所有返回都检查 `ok`，具体字段在 `data`。保存 create/read 返回的 `id`、`revision`，随后按顺序调用：
+
+| 操作 | 参数 / 处理 |
+| --- | --- |
+| `preflight` | `{id, expectedRevision: revision, action:"publish", build:true}`；必须检查 `data.passed`，保存 `data.reviewToken` |
+| `publish` 演练 | `{id, expectedRevision: revision, expectedReview: reviewToken, action:"publish", mode:"simulate", requestId: 新UUID}` |
+| `publish` 正式 | 同样参数但 `mode:"remote"`，使用另一个 requestId；确认演练成功、版本和配置未变化、已获发布授权 |
+| `status` | `{jobId: 发布返回的jobId, refresh:true}`；部署完成前不报告成功 |
+
+表格是参数说明，不是可直接保存的 JSON；用真实返回值替换变量。演练或预检后如果代码、配置、图片或内容变了，重新读取并预检，不沿用旧 reviewToken。`ok:true` 也可能返回失败状态的任务，必须继续读取 `data.status` 和 `data.error`。
+
+更新文章沿用原 ID，先 read，再 update（完整 body 与 expectedRevision），之后走相同发布步骤。撤回使用 `action:"withdraw"`，同样需要明确指令；它撤下网站文章，但不会清除公开 Git 历史里的正文。
+
+## MCP 接入
+
+通用 stdio 启动命令为 `node tools/blog/mcp.mjs --root D:\projects\astro-blog`，应将脚本路径配置为绝对路径。参考 [通用配置](../examples/mcp-config.json)。CLI 操作在 MCP 中加 `blog_` 前缀，例如 `blog_create`、`blog_preflight`、`blog_publish`、`blog_status`，参数相同。
+
+通用示例中的 `mcpServers` 是示意格式，不能假定 Hermes 的配置字段也相同；按实际 Hermes 版本的配置规范登记 command、args。MCP 通过 stdio 启动本地进程，不需要公开端口。若 Hermes 无 MCP 支持，直接用 CLI 即可。
+
 ## 项目与接口
 
 - 项目目录：`D:\projects\astro-blog`（迁移后替换为实际绝对路径）。
@@ -54,4 +126,4 @@
 
 ## 发布中心与配置向导（当前接口版本3）
 
-在上述接口基础上增加 setup、configure、pending、preflight，当前共30个 MCP 工具。详见 [发布中心指南与调用示例](21-publish-center-guide.md)。configure 始终关闭远程，不接受凭据，必须携带 setup 返回的配置 revision。pending 的比较基线是本地 HEAD，不是线上版本。preflight 返回 ok 仍需检查 data.passed；发布传入 expectedReview=reviewToken，过期则重新预检。任务 nextSteps 是处理建议，不授权自动推送或重试。只在明确的用户远程发布请求和已授权配置下使用 remote；本轮仅验证 simulate。
+在上述接口基础上增加 setup、configure、pending、preflight，当前共30个 MCP 工具。详见 [发布中心指南与调用示例](21-publish-center-guide.md)。configure 始终关闭远程，不接受凭据，必须携带 setup 返回的配置 revision。pending 的比较基线是本地 HEAD，不是线上版本。preflight 返回 ok 仍需检查 data.passed；发布传入 expectedReview=reviewToken，过期则重新预检。任务 nextSteps 是处理建议，不授权自动推送或重试。只在明确的用户远程发布请求和已授权配置下使用 remote；博客首次真实部署已验收，Hermes 的 remote 链路仍需实际接入验证。
