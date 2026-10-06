@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeading from '../components/PageHeading.astro';
+import { site } from '../site.config';
+import { url } from '../lib/content';
+---
+
+<Base title="关于" active="about">
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="NICE TO MEET YOU"
+      title="你好，欢迎来坐坐"
+      description="一个放下想法、收好日常的地方。"
+    />
+    <img
+      class="about-image"
+      src={url('media/manga-writer-small.webp')}
+      width="480"
+      height="320"
+      alt="黑白漫画：写笔记的人与熟睡的白猫"
+    />
+    <div class="prose about-intro">
+      <h2>关于 {site.author}</h2>
+      <p>{site.about}</p>
+      <h2>在这里，你会读到</h2>
+      <p>
+        文章里是值得慢慢整理的知识与思考；碎碎念里是不必凑成长篇的发现。长短都好，记录本身就有意义。
+      </p>
+      <p>
+        如果想跟上小站的更新，可以<a href={url('rss.xml')}>订阅 RSS</a>，或者从
+        <a href={url('archives/')}>时间归档</a>开始随意翻翻。
+      </p>
+    </div>
+    <aside class="about-note">
+      这个小站目前使用示例名称、作者和内容。它们都可以替换成你的故事；插画中的人物是虚构角色。
+    </aside>
+  </div>
+</Base>

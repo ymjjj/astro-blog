@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "astro-blog": {
+      "command": "node",
+      "args": [
+        "D:\\projects\\astro-blog\\tools\\blog\\mcp.mjs",
+        "--root",
+        "D:\\projects\\astro-blog"
+      ]
+    }
+  }
+}

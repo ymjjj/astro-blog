@@ -1,0 +1,186 @@
+---
+import '../styles/global.css';
+import 'katex/dist/katex.min.css';
+import Icon from '../components/Icon.astro';
+import ReadingTools from '../components/ReadingTools.astro';
+import { site } from '../site.config';
+import { url } from '../lib/content';
+interface Props {
+  title?: string;
+  description?: string;
+  active?: string;
+  noindex?: boolean;
+  articleDate?: Date;
+  modifiedDate?: Date;
+}
+const {
+  title,
+  description = site.description,
+  active = '',
+  noindex = false,
+  articleDate,
+  modifiedDate,
+} = Astro.props;
+const fullTitle = title ? `${title} · ${site.title}` : `${site.title} · 笔记与日常`;
+const canonical = new URL(Astro.url.pathname.replace(/\/404\/$/, '/404.html'), Astro.site);
+const imageUrl = new URL(url('media/manga-writer.webp'), Astro.site);
+const links = [
+  ['', '首页'],
+  ['posts', '文章'],
+  ['moments', '碎碎念'],
+  ['archives', '归档'],
+  ['about', '关于'],
+];
+---
+
+<!doctype html>
+<html lang={site.language}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.author} />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f9fc" />
+    {noindex && <meta name="robots" content="noindex, follow" />}
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href={url('favicon.svg')} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${site.title} RSS`}
+      href={url('rss.xml')}
+    />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content={articleDate ? 'article' : 'website'} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={imageUrl} />
+    <meta property="og:locale" content="zh_CN" />
+    <meta name="twitter:card" content="summary_large_image" />
+    {articleDate && <meta property="article:published_time" content={articleDate.toISOString()} />}
+    {modifiedDate && <meta property="article:modified_time" content={modifiedDate.toISOString()} />}
+    <script is:inline>
+      (() => {
+        let saved;
+        try {
+          saved = localStorage.getItem('blog-theme');
+        } catch {}
+        document.documentElement.dataset.theme =
+          saved === 'dark' || saved === 'light'
+            ? saved
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      跳到正文
+    </a>
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href={url()} aria-label={`${site.title}首页`}>
+          <span class="brand-icon">
+            <Icon name="book" size={22} />
+          </span>
+          <span>
+            {site.title}
+            <small>{site.subtitle}</small>
+          </span>
+        </a>
+        <nav class="main-nav" aria-label="主导航">
+          {links.map(([path, label]) => (
+            <a
+              href={url(path ? `${path}/` : '')}
+              aria-current={active === path ? 'page' : undefined}
+            >
+              {label}
+            </a>
+          ))}
+        </nav>
+        <div class="header-actions">
+          {__LOCAL_DRAFTS__ && (
+            <a
+              class="local-drafts-link"
+              href={url('drafts/')}
+              aria-current={active === 'drafts' ? 'page' : undefined}
+            >
+              草稿箱
+            </a>
+          )}
+          <a class="icon-button" href={url('search/')} aria-label="搜索文章和碎碎念">
+            <Icon name="search" />
+          </a>
+          <button
+            class="icon-button"
+            id="theme-toggle"
+            aria-label="切换明暗主题"
+            title="切换明暗主题"
+            hidden
+          >
+            <span class="light-icon">
+              <Icon name="moon" />
+            </span>
+            <span class="dark-icon">
+              <Icon name="sun" />
+            </span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main" class="site-main" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div>
+        <a class="footer-brand" href={url()}>
+          {site.title}
+        </a>
+        <span>把日子写成一页一页。</span>
+      </div>
+      <div>
+        <a href={url('tags/')}>标签</a>
+        <a href={url('rss.xml')} class="rss-link">
+          <Icon name="rss" size={15} /> RSS 订阅
+        </a>
+        <span>
+          © {new Date().getUTCFullYear()} {site.author}
+        </span>
+      </div>
+    </footer>
+    <ReadingTools />
+    <script>
+      const button = document.querySelector<HTMLButtonElement>('#theme-toggle');
+      if (button) {
+        button.hidden = false;
+        const sync = () =>
+          button.setAttribute(
+            'aria-pressed',
+            String(document.documentElement.dataset.theme === 'dark'),
+          );
+        sync();
+        button.addEventListener('click', () => {
+          const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+          document.documentElement.dataset.theme = next;
+          try {
+            localStorage.setItem('blog-theme', next);
+          } catch {}
+          sync();
+        });
+        matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+          let saved;
+          try {
+            saved = localStorage.getItem('blog-theme');
+          } catch {}
+          if (saved !== 'light' && saved !== 'dark') {
+            document.documentElement.dataset.theme = event.matches ? 'dark' : 'light';
+            sync();
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

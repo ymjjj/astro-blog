@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/content';
+---
+
+<Base title="这一页走丢了" noindex>
+  <section class="error-page">
+    <div class="error-number" aria-hidden="true">
+      404
+    </div>
+    <h1>这一页，暂时走丢了。</h1>
+    <p>也许链接已经改变，或故事还没有写到这里。</p>
+    <a class="primary-link" href={url()}>
+      回到首页 →
+    </a>
+  </section>
+</Base>

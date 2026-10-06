@@ -1,0 +1,36 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { entryUrl, formatDate, readingTime, tagUrl } from '../lib/content';
+import Icon from './Icon.astro';
+import UpdatedDate from './UpdatedDate.astro';
+interface Props {
+  entry: CollectionEntry<'posts'>;
+  index?: number;
+}
+const { entry, index } = Astro.props;
+---
+
+<article class="post-card">
+  <div class="post-meta">
+    <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+    <span>·</span>
+    <span>{readingTime(entry)} 分钟阅读</span>
+    <UpdatedDate updated={entry.data.updated} compact />
+    {index !== undefined && <span class="post-number">{String(index + 1).padStart(2, '0')}</span>}
+  </div>
+  <h3>
+    <a href={entryUrl(entry)}>{entry.data.title}</a>
+  </h3>
+  <p>{entry.data.description}</p>
+  <div class="post-bottom">
+    <div class="tags">
+      {entry.data.tags.map((tag) => (
+        <a href={tagUrl(tag)}># {tag}</a>
+      ))}
+    </div>
+    <a class="read-link" href={entryUrl(entry)} aria-label={`阅读：${entry.data.title}`}>
+      <span>阅读全文</span>
+      <Icon name="arrow" size={19} />
+    </a>
+  </div>
+</article>

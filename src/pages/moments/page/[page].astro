@@ -1,0 +1,46 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import PageHeading from '../../../components/PageHeading.astro';
+import MomentList from '../../../components/MomentList.astro';
+import { published } from '../../../lib/content';
+import { PAGE_SIZE, pageCount } from '../../../lib/pagination';
+
+interface Props {
+  moments: CollectionEntry<'moments'>[];
+  currentPage: number;
+  totalPages: number;
+}
+
+export async function getStaticPaths() {
+  const { moments } = await published();
+  const totalPages = pageCount(moments.length);
+
+  return Array.from({ length: Math.max(0, totalPages - 1) }, (_, index) => {
+    const currentPage = index + 2;
+    const start = (currentPage - 1) * PAGE_SIZE;
+
+    return {
+      params: { page: String(currentPage) },
+      props: {
+        moments: moments.slice(start, start + PAGE_SIZE),
+        currentPage,
+        totalPages,
+      },
+    };
+  });
+}
+
+const { moments, currentPage, totalPages } = Astro.props;
+---
+
+<Base title="碎碎念" active="moments">
+  <div class="narrow-page moments-page">
+    <PageHeading
+      eyebrow="LITTLE MOMENTS"
+      title="不成篇，也值得记下"
+      description="一闪而过的想法、日常的小发现。短短几句，也是一种记录。"
+    />
+    <MomentList moments={moments} currentPage={currentPage} totalPages={totalPages} />
+  </div>
+</Base>

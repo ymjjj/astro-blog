@@ -1,0 +1,15 @@
+---
+import HomeFeed from '../../components/HomeFeed.astro';
+import { published } from '../../lib/content';
+import { pageCount } from '../../lib/pagination';
+export async function getStaticPaths() {
+  const { all } = await published();
+  return Array.from({ length: pageCount(all.length) - 1 }, (_, i) => ({
+    params: { page: String(i + 2) },
+    props: { page: i + 2 },
+  }));
+}
+const { page } = Astro.props;
+---
+
+<HomeFeed page={page} />

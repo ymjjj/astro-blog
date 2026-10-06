@@ -1,0 +1,9 @@
+{
+  "kind": "posts",
+  "slug": "my-first-studio-note",
+  "title": "我的第一篇工具草稿",
+  "description": "练习通过统一接口保存内容，还没有发布。",
+  "tags": ["写作练习"],
+  "body": "## 从一句话开始\n\n这是一篇草稿。可以在本地写作台中继续编辑。\n",
+  "requestId": "example-first-studio-note-v1"
+}

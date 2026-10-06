@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.astro/
+.cache/
+.blog/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+
+# Local drafts and their private assets must not enter the public source repository.
+/src/content/posts/unpublished-test.md
+/src/content/moments/unpublished-moment.md
+/src/assets/private-draft.svg
+# Historical screenshots / machine logs can contain local draft previews.
+/docs/screenshots/
+/docs/validation/

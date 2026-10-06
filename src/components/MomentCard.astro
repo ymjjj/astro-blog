@@ -1,0 +1,31 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import { entryUrl, formatDate, tagUrl } from '../lib/content';
+interface Props {
+  entry: CollectionEntry<'moments'>;
+  compact?: boolean;
+}
+const { entry, compact = false } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<article class:list={['moment-card', { compact }]}>
+  <a class="moment-date" href={entryUrl(entry)}>
+    <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+    <span aria-hidden="true"> ↗</span>
+    <span class="sr-only"> · 查看这条碎碎念</span>
+  </a>
+  {entry.data.title && (
+    <h3>
+      <a href={entryUrl(entry)}>{entry.data.title}</a>
+    </h3>
+  )}
+  <div class="prose moment-prose">
+    <Content />
+  </div>
+  <div class="tags">
+    {entry.data.tags.map((tag) =>
+      entry.data.draft ? <span class="draft-tag"># {tag}</span> : <a href={tagUrl(tag)}># {tag}</a>,
+    )}
+  </div>
+</article>

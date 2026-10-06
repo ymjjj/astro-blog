@@ -1,0 +1,19 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import MomentCard from './MomentCard.astro';
+import Pagination from './Pagination.astro';
+
+interface Props {
+  moments: CollectionEntry<'moments'>[];
+  currentPage: number;
+  totalPages: number;
+}
+
+const { moments, currentPage, totalPages } = Astro.props;
+---
+
+<div class="timeline">
+  {moments.map((entry) => <MomentCard entry={entry} />)}
+</div>
+{!moments.length && <p class="empty-state">留一页空白，等生活来填。</p>}
+<Pagination section="moments" currentPage={currentPage} totalPages={totalPages} />

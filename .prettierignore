@@ -1,0 +1,11 @@
+node_modules
+.cache
+.blog
+dist
+.astro
+docs/validation
+package-lock.json
+assets
+public/media
+src/assets
+docs/screenshots

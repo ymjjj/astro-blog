@@ -1,0 +1,32 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeading from '../../components/PageHeading.astro';
+import { readable, entryUrl, entryTitle, formatDate } from '../../lib/content';
+export function getStaticPaths() {
+  return __LOCAL_DRAFTS__ ? [{ params: { page: undefined } }] : [];
+}
+const entries = (await readable()).all.filter((entry) => entry.data.draft);
+---
+
+<Base title="本地草稿箱" active="drafts" noindex>
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="LOCAL WORKSPACE"
+      title="还在酝酿的文字"
+      description="这里仅在本地开发预览中可见。草稿无需改为已发布，就可以查看排版。"
+    />
+    <p class="draft-notice">
+      共 {entries.length} 条草稿 · 公开页面、搜索与订阅仍然只展示已发布内容。
+    </p>
+    {entries.map((entry) => (
+      <article class="draft-row">
+        <span class="draft-badge">草稿 · {entry.collection === 'posts' ? '文章' : '碎碎念'}</span>
+        <h2>
+          <a href={entryUrl(entry)}>{entryTitle(entry)}</a>
+        </h2>
+        <time datetime={entry.data.date.toISOString()}>{formatDate(entry.data.date)}</time>
+      </article>
+    ))}
+    {!entries.length && <p class="empty-state">还没有草稿。新建内容默认保存在这里。</p>}
+  </div>
+</Base>

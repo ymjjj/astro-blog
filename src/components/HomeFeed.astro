@@ -1,0 +1,109 @@
+---
+import Base from '../layouts/Base.astro';
+import PostCard from '../components/PostCard.astro';
+import MomentCard from '../components/MomentCard.astro';
+import Icon from '../components/Icon.astro';
+import { published, tagsFor, tagUrl, url } from '../lib/content';
+import { site } from '../site.config';
+import Pagination from './Pagination.astro';
+import { PAGE_SIZE, pageCount } from '../lib/pagination';
+const { posts, moments, all } = await published();
+const { page = 1 } = Astro.props;
+const entries = all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+---
+
+<Base active="" title={page > 1 ? `日常手记 · 第 ${page} 页` : undefined}>
+  {page === 1 ? (
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>
+          记录笔记，
+          <br />
+          也记录<span class="ink-accent">日常</span>。
+        </h1>
+        <p>{site.description}</p>
+        <a class="primary-link" href={url('posts/')}>
+          翻开笔记 <Icon name="arrow" size={17} />
+        </a>
+      </div>
+      <figure class="hero-art">
+        <img
+          src={url('media/manga-writer.webp')}
+          srcset={`${url('media/manga-writer-small.webp')} 480w, ${url('media/manga-writer.webp')} 960w`}
+          sizes="(max-width: 640px) 160px, (max-width: 900px) 30vw, 320px"
+          width="960"
+          height="640"
+          alt="黑白漫画：写笔记的人与桌边熟睡的白猫"
+          fetchpriority="high"
+        />
+      </figure>
+    </section>
+  ) : (
+    <header class="feed-page-heading">
+      <span class="eyebrow">LITTLE DAYS, LITTLE NOTES</span>
+      <h1>继续翻翻日常手记</h1>
+      <p>认真写下的笔记，和一闪而过的小念头。</p>
+    </header>
+  )}
+  <div class="home-grid">
+    <section class="latest-posts">
+      <div class="section-heading">
+        <h2>日常手记</h2>
+        <a href={url('archives/')}>
+          时光归档 <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+      {entries.length ? (
+        <div class="mixed-feed">
+          {entries.map((entry) => (
+            <div
+              class="feed-entry"
+              data-kind={entry.collection}
+              data-entry-id={`${entry.collection}/${entry.id}`}
+              data-date={entry.data.date.toISOString()}
+            >
+              <span class="feed-kind">
+                {entry.collection === 'posts' ? '一篇笔记' : '一枚碎碎念'}
+              </span>
+              {entry.collection === 'posts' ? (
+                <PostCard entry={entry} />
+              ) : (
+                <MomentCard entry={entry} />
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">第一篇笔记，正在路上。</p>
+      )}
+      <Pagination section="" currentPage={page} totalPages={pageCount(all.length)} />
+    </section>
+    <aside class="home-sidebar">
+      <section class="profile-card">
+        <h2>关于这里</h2>
+        <p>{site.intro}</p>
+        <div class="profile-stats">
+          <a href={url('posts/')}>
+            <strong>{posts.length}</strong> 篇文章
+          </a>
+          <a href={url('moments/')}>
+            <strong>{moments.length}</strong> 条碎碎念
+          </a>
+        </div>
+        <a class="text-link" href={url('about/')}>
+          关于这个小站 <span aria-hidden="true">↗</span>
+        </a>
+      </section>
+      <section class="tag-corner">
+        <span class="mini-label">沿着兴趣，随意逛逛</span>
+        <div class="tags">
+          {tagsFor(all)
+            .slice(0, 8)
+            .map(([tag]) => (
+              <a href={tagUrl(tag)}># {tag}</a>
+            ))}
+        </div>
+      </section>
+    </aside>
+  </div>
+</Base>

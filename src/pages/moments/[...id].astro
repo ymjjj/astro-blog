@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import MomentCard from '../../components/MomentCard.astro';
+import { readable, url, entryTitle, excerpt } from '../../lib/content';
+import DraftBanner from '../../components/DraftBanner.astro';
+export async function getStaticPaths() {
+  return (await readable()).moments.map((entry) => ({
+    params: { id: entry.id },
+    props: { entry },
+  }));
+}
+const { entry } = Astro.props;
+---
+
+<Base
+  title={entryTitle(entry)}
+  description={excerpt(entry)}
+  active="moments"
+  articleDate={entry.data.date}
+  noindex={entry.data.draft}
+>
+  {entry.data.draft && <DraftBanner />}
+  <div class="narrow-page moment-detail">
+    <a class="back-link" href={url('moments/')}>
+      ← 回到碎碎念
+    </a>
+    <h1 class="sr-only">{entryTitle(entry)}</h1>
+    <MomentCard entry={entry} />
+    <p class="quiet-note">一个片刻，也有自己的位置。</p>
+  </div>
+</Base>

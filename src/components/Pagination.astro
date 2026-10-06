@@ -1,0 +1,79 @@
+---
+import { pagePath } from '../lib/pagination';
+import { url } from '../lib/content';
+
+interface Props {
+  section: string;
+  currentPage: number;
+  totalPages: number;
+}
+
+const { section, currentPage, totalPages } = Astro.props;
+---
+
+{totalPages > 1 && (
+  <nav class="pagination" aria-label="分页导航">
+    {currentPage > 1 ? (
+      <a class="pagination-link" href={url(pagePath(section, currentPage - 1))}>
+        上一页
+      </a>
+    ) : (
+      <span class="pagination-link pagination-link-disabled" aria-disabled="true">
+        上一页
+      </span>
+    )}
+    <span class="pagination-status">
+      第 {currentPage} 页，共 {totalPages} 页
+    </span>
+    {currentPage < totalPages ? (
+      <a class="pagination-link" href={url(pagePath(section, currentPage + 1))}>
+        下一页
+      </a>
+    ) : (
+      <span class="pagination-link pagination-link-disabled" aria-disabled="true">
+        下一页
+      </span>
+    )}
+  </nav>
+)}
+
+<style>
+  .pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 36px;
+    padding: 18px 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .pagination-link {
+    padding: 7px 10px;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--text);
+  }
+
+  a.pagination-link:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .pagination-link-disabled {
+    opacity: 0.45;
+  }
+
+  @media (max-width: 480px) {
+    .pagination {
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .pagination-link {
+      padding: 7px;
+    }
+  }
+</style>

@@ -1,0 +1,130 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeading from '../components/PageHeading.astro';
+import Icon from '../components/Icon.astro';
+import { url } from '../lib/content';
+---
+
+<Base title="搜索" active="search" noindex>
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="FIND A LITTLE SOMETHING"
+      title="找回那个念头"
+      description="搜索文章、碎碎念与标签，中文也可以。"
+    />
+    <form id="search-form" role="search" data-index={url('search-index.json')}>
+      <label class="sr-only" for="query">
+        搜索关键词
+      </label>
+      <div class="search-box">
+        <Icon name="search" />
+        <input
+          type="search"
+          id="query"
+          name="q"
+          placeholder="试试「笔记」或「留白」…"
+          autocomplete="off"
+          maxlength="100"
+        />
+        <button type="reset">清空</button>
+      </div>
+    </form>
+    <noscript>
+      <p>
+        搜索需要浏览器启用 JavaScript。你仍可通过<a href={url('tags/')}>标签</a>和
+        <a href={url('archives/')}>归档</a>浏览内容。
+      </p>
+    </noscript>
+    <p class="search-status" id="search-status" role="status" aria-live="polite">
+      输入关键词，寻找一篇笔记或一个片刻。
+    </p>
+    <ul id="search-results" class="search-results"></ul>
+  </div>
+</Base>
+<script>
+  type SearchEntry = {
+    title: string;
+    url: string;
+    text: string;
+    description: string;
+    tags: string[];
+    kind: string;
+    date: string;
+  };
+  const form = document.querySelector<HTMLFormElement>('#search-form')!;
+  const input = document.querySelector<HTMLInputElement>('#query')!;
+  const status = document.querySelector<HTMLElement>('#search-status')!;
+  const results = document.querySelector<HTMLUListElement>('#search-results')!;
+  let data: SearchEntry[] | undefined;
+  let pending: Promise<SearchEntry[]> | undefined;
+  let request = 0;
+  function load(): Promise<SearchEntry[]> {
+    return (pending ??= fetch(form.dataset.index!)
+      .then((response) => {
+        if (!response.ok) throw new Error('index');
+        return response.json() as Promise<SearchEntry[]>;
+      })
+      .then((value) => (data = value))
+      .catch((error) => {
+        pending = undefined;
+        throw error;
+      }));
+  }
+  const normalize = (value: string) => value.normalize('NFKC').toLocaleLowerCase('zh-CN');
+  async function search() {
+    const current = ++request;
+    const query = input.value.trim();
+    const address = new URL(location.href);
+    query ? address.searchParams.set('q', query) : address.searchParams.delete('q');
+    history.replaceState(null, '', address);
+    results.replaceChildren();
+    if (!query) {
+      status.textContent = '输入关键词，寻找一篇笔记或一个片刻。';
+      return;
+    }
+    status.textContent = '正在翻找笔记…';
+    try {
+      const entries = data || (await load());
+      if (request !== current) return;
+      const words = normalize(query).split(/\s+/);
+      const matches = entries.filter((entry) =>
+        words.every((word) =>
+          normalize(`${entry.title} ${entry.text} ${entry.tags.join(' ')}`).includes(word),
+        ),
+      );
+      status.textContent = matches.length
+        ? `找到 ${matches.length} 条记录`
+        : '还没有找到。试试更短的关键词，或换一个说法。';
+      for (const entry of matches) {
+        const li = document.createElement('li');
+        const meta = document.createElement('small');
+        meta.textContent = `${entry.kind} · ${entry.date}`;
+        const heading = document.createElement('h2');
+        const link = document.createElement('a');
+        link.href = entry.url;
+        link.textContent = entry.title;
+        heading.append(link);
+        const excerpt = document.createElement('p');
+        excerpt.textContent = entry.description;
+        li.append(meta, heading, excerpt);
+        results.append(li);
+      }
+    } catch {
+      if (request === current) status.textContent = '搜索索引暂时无法读取，请检查连接后重新输入。';
+    }
+  }
+  input.value = new URL(location.href).searchParams.get('q')?.slice(0, 100) || '';
+  input.addEventListener('input', () => {
+    void search();
+  });
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    void search();
+  });
+  form.addEventListener('reset', () => {
+    input.value = '';
+    void search();
+    input.focus();
+  });
+  void search();
+</script>

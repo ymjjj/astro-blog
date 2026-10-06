@@ -1,0 +1,25 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeading from '../../components/PageHeading.astro';
+import PostList from '../../components/PostList.astro';
+import { published } from '../../lib/content';
+import { PAGE_SIZE, pageCount } from '../../lib/pagination';
+const { posts } = await published();
+const totalPages = pageCount(posts.length);
+---
+
+<Base title="文章" active="posts">
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="THE NOTEBOOK"
+      title="慢慢写下来的事"
+      description="整理知识，也整理思绪。这里收着每一篇认真写下的笔记。"
+    />
+    <PostList
+      posts={posts.slice(0, PAGE_SIZE)}
+      totalCount={posts.length}
+      currentPage={1}
+      totalPages={totalPages}
+    />
+  </div>
+</Base>

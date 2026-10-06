@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="studio-token" content="STUDIO_TOKEN" />
+    <title>页间写作台</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/">▤ 页间写作台 <small>把小小的念头，写成一页。</small></a>
+      <div>
+        <a href="#publish-center">发布中心</a>
+        <span class="local">仅在本机运行</span
+        ><button id="theme" type="button" aria-label="切换明暗主题">☾</button>
+      </div>
+    </header>
+    <main>
+      <aside class="library">
+        <div class="section-title">
+          <h1>我的手记</h1>
+          <button id="new" type="button">＋ 新建</button>
+        </div>
+        <label>搜索内容<input id="query" type="search" placeholder="标题、正文或标签" /></label
+        ><label
+          >内容状态<select id="filter">
+            <option value="all">全部内容</option>
+            <option value="draft">草稿</option>
+            <option value="published">已标记发布</option>
+          </select></label
+        >
+        <div id="entries" aria-label="内容列表"></div>
+      </aside>
+      <section class="workspace">
+        <section id="recovery-panel" hidden>
+          <div class="section-title">
+            <h3>找回未完成的编辑</h3>
+            <button id="refresh-recovery" type="button">刷新恢复副本</button>
+          </div>
+          <label
+            >搜索恢复副本<input
+              id="recovery-query"
+              type="search"
+              placeholder="标题、正文、所属内容"
+          /></label>
+          <p id="recovery-space" class="hint"></p>
+          <p class="hint">恢复副本只在本机保存，不会上线。其他窗口仍在编辑的副本请勿清理。</p>
+          <div id="recoveries"></div>
+        </section>
+        <div class="editor-head">
+          <div>
+            <span class="eyebrow">A LITTLE NOTEBOOK</span>
+            <h2 id="editor-heading">新的一页</h2>
+          </div>
+          <span id="save-state">尚未保存</span>
+        </div>
+        <form id="editor">
+          <div class="field-grid">
+            <label
+              >内容类型<select id="kind">
+                <option value="posts">文章</option>
+                <option value="moments">碎碎念</option>
+              </select></label
+            ><label
+              >文件名（创建后保持不变）<input
+                id="slug"
+                placeholder="留空自动生成"
+                pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            /></label>
+          </div>
+          <label
+            >标题 <span id="title-hint">文章必填</span
+            ><input id="title" maxlength="180" placeholder="今天想写些什么？"
+          /></label>
+          <label id="description-field"
+            >摘要<textarea
+              id="description"
+              rows="2"
+              maxlength="600"
+              placeholder="用一两句话介绍这篇文章"
+            ></textarea>
+          </label>
+          <div class="field-grid">
+            <label>发布时间<input id="date" type="datetime-local" required /></label
+            ><label id="updated-field"
+              >最后更新（可留空）<input id="updated" type="datetime-local"
+            /></label>
+          </div>
+          <label>标签<input id="tags" placeholder="学习笔记，日常（用逗号分隔）" /></label>
+          <div class="body-heading">
+            <label for="body">Markdown 正文</label
+            ><label class="upload-label"
+              >＋ 插入图片<input
+                id="image"
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/avif"
+            /></label>
+          </div>
+          <textarea
+            id="body"
+            rows="18"
+            required
+            spellcheck="false"
+            placeholder="从一句话开始吧……"
+          ></textarea>
+          <p class="hint">
+            支持粘贴或拖入图片（每张最多 10 MB）。停止输入约 2
+            秒后自动保存；未填完整的内容保留为恢复副本。
+          </p>
+          <div class="actions">
+            <button class="primary" id="save" type="submit">保存草稿</button
+            ><button id="preview" type="button">保存并预览</button
+            ><button id="check" type="button">检查内容</button>
+          </div>
+        </form>
+        <p id="message" role="status" aria-live="polite">新内容默认保存为草稿，不会自动上线。</p>
+        <section id="conflict-panel" hidden>
+          <h3>检测到其他修改，自动保存已暂停</h3>
+          <p class="hint">
+            你的编辑仍在上方。点击读取磁盘版本进行比较；继续前请在编辑器中完成合并。
+          </p>
+          <button id="compare-external" type="button">读取磁盘版本</button>
+          <pre id="external-content" tabindex="0"></pre>
+          <div class="actions">
+            <button id="accept-merge" type="button" hidden>已比较，使用合并后的编辑继续</button
+            ><button id="use-external" type="button" hidden>放弃编辑，使用磁盘版本</button>
+          </div>
+        </section>
+        <section class="history-panel">
+          <div class="section-title">
+            <h3>修改历史</h3>
+            <button id="load-history" type="button">查看历史</button>
+          </div>
+          <p class="hint">
+            恢复正文及元数据，保留当前发布状态；只保存到本地，不推送。恢复前的版本也会保留。
+          </p>
+          <div id="history-controls" hidden>
+            <label>历史版本<select id="history-version"></select></label>
+            <div class="actions">
+              <button id="compare-version" type="button">与当前版本比较</button
+              ><button id="restore-version" type="button" disabled>恢复选中版本</button>
+            </div>
+            <p id="diff-summary"></p>
+            <pre id="version-diff" tabindex="0" aria-label="版本差异"></pre>
+          </div>
+        </section>
+        <section class="maintenance-panel" aria-label="资料管理">
+          <h3>资料管理</h3>
+          <p class="hint">图片、备份和回收站只在本机使用。清理与恢复先预览清单，再由你确认执行。</p>
+          <div class="actions">
+            <button id="manage-images" type="button">管理图片</button
+            ><button id="manage-backups" type="button">备份与恢复</button
+            ><button id="manage-trash" type="button">回收站</button>
+          </div>
+          <section id="asset-panel" hidden>
+            <label
+              >搜索图片<input id="asset-query" type="search" placeholder="文件名或引用内容"
+            /></label>
+            <label
+              >显示范围<select id="asset-filter">
+                <option value="all">全部图片</option>
+                <option value="unused">没有已知引用</option>
+              </select></label
+            >
+            <button id="refresh-assets" type="button">刷新图片</button>
+            <p id="asset-space" class="hint"></p>
+            <div id="asset-list" class="asset-grid"></div>
+          </section>
+          <section id="backup-panel" hidden>
+            <p class="hint">
+              备份包含正文、图片、历史和已同步的恢复副本。请把下载的备份另存到自己的存储设备。
+            </p>
+            <div class="actions">
+              <button id="create-backup" type="button">生成备份</button
+              ><button id="refresh-backups" type="button">刷新备份</button>
+            </div>
+            <label
+              >导入本站备份包<input id="import-backup" type="file" accept=".gz,.blogbackup"
+            /></label>
+            <div id="backup-list"></div>
+            <pre id="backup-inspection" tabindex="0" hidden></pre>
+          </section>
+          <section id="trash-panel" hidden>
+            <button id="refresh-trash" type="button">刷新回收站</button>
+            <div id="trash-list"></div>
+          </section>
+          <section id="plan-panel" hidden>
+            <h3>执行前审查清单</h3>
+            <p id="plan-notice"></p>
+            <div id="plan-files"></div>
+            <label class="confirm-plan"
+              ><input id="confirm-plan" type="checkbox" />我已检查此清单，确认执行本地操作</label
+            >
+            <button id="apply-plan" type="button" disabled>确认执行清单</button>
+          </section>
+          <p id="maintenance-message" role="status" aria-live="polite"></p>
+        </section>
+        <section class="preview-panel" hidden>
+          <div class="section-title">
+            <h3>保存后的预览</h3>
+            <a id="preview-link" target="_blank" rel="noopener noreferrer">独立窗口打开 ↗</a>
+          </div>
+          <iframe
+            id="preview-frame"
+            title="内容预览"
+            sandbox="allow-scripts allow-same-origin allow-popups"
+            data-port="PREVIEW_PORT"
+          ></iframe>
+        </section>
+        <section class="publish-panel" id="publish-center" aria-label="发布中心">
+          <div class="section-title">
+            <h3>发布中心</h3>
+            <button id="refresh-jobs" type="button">刷新任务</button>
+          </div>
+          <p id="config-status">正在读取发布配置……</p>
+          <details id="setup-panel">
+            <summary>首次配置与目标检查</summary>
+            <p class="hint">
+              ① 填写目标 → ② 检查配置 → ③ 保存到本机。保存始终关闭远程发布，不会创建仓库或修改
+              GitHub 设置。这里不填写密码或令牌。
+            </p>
+            <form id="setup-form">
+              <label
+                >GitHub 仓库<input
+                  id="setup-repository"
+                  placeholder="your-name/astro-blog"
+                  required
+                  maxlength="200"
+              /></label>
+              <div class="field-grid">
+                <label
+                  >发布分支<input id="setup-branch" value="main" required maxlength="150"
+                /></label>
+                <label
+                  >站点子路径<input
+                    id="setup-base"
+                    value="/"
+                    placeholder="/astro-blog/"
+                    required
+                    maxlength="200"
+                /></label>
+              </div>
+              <label
+                >HTTPS 站点源<input
+                  id="setup-site"
+                  type="url"
+                  placeholder="https://your-name.github.io"
+                  required
+                  maxlength="300"
+              /></label>
+              <p class="hint">
+                项目站点通常使用 /仓库名/；用户站点或自定义域名通常使用 /。站点源不含子路径。
+              </p>
+              <div class="actions">
+                <button id="check-setup" type="button">检查候选配置</button>
+                <button id="save-setup" type="submit">保存配置（远程关闭）</button>
+                <button id="reload-setup" type="button">重新读取配置</button>
+              </div>
+            </form>
+            <p id="setup-notice" role="status"></p>
+            <ul id="setup-checks" class="check-list"></ul>
+          </details>
+          <details id="pending-panel">
+            <summary>待发布内容与修改预览</summary>
+            <label
+              >搜索待审查内容<input id="pending-query" type="search" placeholder="标题或内容 ID"
+            /></label>
+            <button id="refresh-pending" type="button">刷新修改清单</button>
+            <p id="pending-notice" class="hint"></p>
+            <div id="pending-list"></div>
+          </details>
+          <div class="field-grid">
+            <label
+              >预览操作<select id="review-action">
+                <option value="publish">发布 / 更新当前内容</option>
+                <option value="withdraw">撤回当前内容</option>
+              </select></label
+            >
+            <div class="actions">
+              <button id="inspect-publish" type="button">预览当前修改</button
+              ><button id="build-preflight" type="button">完整发布前检查</button>
+            </div>
+          </div>
+          <section id="review-panel" hidden>
+            <p id="review-notice" role="status"></p>
+            <ul id="review-checks" class="check-list"></ul>
+            <p id="review-url" class="hint"></p>
+            <details>
+              <summary>将发布的源码与本地提交差异</summary>
+              <pre id="review-diff" tabindex="0"></pre>
+            </details>
+            <details>
+              <summary>本次引用的本地图片</summary>
+              <ul id="review-images"></ul>
+            </details>
+          </section>
+          <div class="actions">
+            <button id="simulate" type="button">演练发布</button
+            ><button id="publish" type="button" disabled>发布到网站</button
+            ><button id="withdraw" type="button" disabled>撤回线上内容</button>
+          </div>
+          <p class="hint">
+            演练在隔离副本构建，不改变原稿、不推送。真实发布需要配置并授权目标仓库。
+          </p>
+          <p id="publish-feedback" role="status" aria-live="polite"></p>
+          <label
+            >任务范围<select id="job-filter">
+              <option value="all">全部最近任务</option>
+              <option value="failed">失败</option>
+              <option value="simulated">本地演练</option>
+              <option value="remote">真实发布</option>
+            </select></label
+          >
+          <div id="jobs" aria-label="发布任务"></div>
+        </section>
+      </section>
+    </main>
+    <footer>页间小记 · 内容属于你，慢慢写就好。</footer>
+  </body>
+</html>

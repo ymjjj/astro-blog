@@ -1,0 +1,19 @@
+---
+import { formatDate } from '../lib/content';
+
+interface Props {
+  updated?: Date;
+  compact?: boolean;
+}
+
+const { updated, compact = false } = Astro.props;
+---
+
+{/* 日期来自内容元数据中的 updated 字段。 */}
+{/* 不读取文件 mtime，避免构建或拷贝时间影响展示。 */}
+{updated && (
+  <span class="updated-date">
+    {compact ? '更新' : '更新于'}{' '}
+    <time datetime={updated.toISOString()}>{formatDate(updated)}</time>
+  </span>
+)}

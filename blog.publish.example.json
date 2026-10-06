@@ -1,0 +1,9 @@
+{
+  "enabled": false,
+  "repository": "YOUR_NAME/YOUR_REPOSITORY",
+  "remote": "origin",
+  "branch": "main",
+  "site": "https://YOUR_NAME.github.io",
+  "base": "/YOUR_REPOSITORY/",
+  "workflow": "deploy.yml"
+}

@@ -1,0 +1,34 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHeading from '../components/PageHeading.astro';
+import { published, entryUrl, entryTitle, yearOf, formatDate } from '../lib/content';
+const { all } = await published();
+const years = [...new Set(all.map((entry) => yearOf(entry.data.date)))];
+---
+
+<Base title="归档" active="archives">
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="A WALK THROUGH TIME"
+      title="时间留下的页脚"
+      description={`共 ${all.length} 次记录。顺着时间，重遇写下它们的那一刻。`}
+    />
+    {years.map((year) => (
+      <section>
+        <h2 class="archive-year">{year}</h2>
+        {all
+          .filter((entry) => yearOf(entry.data.date) === year)
+          .map((entry) => (
+            <div class="archive-row">
+              <time datetime={entry.data.date.toISOString()}>
+                {formatDate(entry.data.date, true)}
+              </time>
+              <span class="kind">{entry.collection === 'posts' ? '文章' : '碎碎念'}</span>
+              <a href={entryUrl(entry)}>{entryTitle(entry)}</a>
+            </div>
+          ))}
+      </section>
+    ))}
+    {!all.length && <p class="empty-state">故事从下一页开始。</p>}
+  </div>
+</Base>

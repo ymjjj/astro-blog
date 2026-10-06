@@ -1,0 +1,25 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeading from '../../components/PageHeading.astro';
+import { published, tagsFor, tagUrl } from '../../lib/content';
+const tags = tagsFor((await published()).all);
+---
+
+<Base title="标签" active="tags">
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="FOLLOW YOUR CURIOSITY"
+      title="沿着兴趣，随意逛逛"
+      description="用一个词，串起不同日子里的想法。"
+    />
+    <div class="tag-cloud">
+      {tags.map(([tag, count]) => (
+        <a href={tagUrl(tag)}>
+          # {tag}
+          <small>{count}</small>
+        </a>
+      ))}
+    </div>
+    {!tags.length && <p class="empty-state">还没有标签。</p>}
+  </div>
+</Base>

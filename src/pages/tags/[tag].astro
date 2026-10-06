@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHeading from '../../components/PageHeading.astro';
+import PostCard from '../../components/PostCard.astro';
+import MomentCard from '../../components/MomentCard.astro';
+import { published, tagsFor, url } from '../../lib/content';
+export async function getStaticPaths() {
+  const { all } = await published();
+  return tagsFor(all).map(([tag]) => ({
+    params: { tag },
+    props: { tag, entries: all.filter((entry) => entry.data.tags.includes(tag)) },
+  }));
+}
+const { tag, entries } = Astro.props;
+---
+
+<Base title={`标签：${tag}`} active="tags">
+  <div class="narrow-page">
+    <PageHeading
+      eyebrow="CONNECTED BY A WORD"
+      title={`# ${tag}`}
+      description={`与这个标签有关的 ${entries.length} 篇文章与片刻。`}
+    />
+    <a class="back-link" href={url('tags/')}>
+      ← 全部标签
+    </a>
+    {entries.map((entry) =>
+      entry.collection === 'posts' ? <PostCard entry={entry} /> : <MomentCard entry={entry} />,
+    )}
+  </div>
+</Base>

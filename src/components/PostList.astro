@@ -1,0 +1,26 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import PostCard from './PostCard.astro';
+import Pagination from './Pagination.astro';
+import { url } from '../lib/content';
+import { PAGE_SIZE } from '../lib/pagination';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
+}
+
+const { posts, totalCount, currentPage, totalPages } = Astro.props;
+---
+
+<div class="list-toolbar">
+  <span>共 {totalCount} 篇文章</span>
+  <a href={url('tags/')}>按标签浏览 ↗</a>
+</div>
+{posts.map((entry, index) => (
+  <PostCard entry={entry} index={index + (currentPage - 1) * PAGE_SIZE} />
+))}
+{!posts.length && <p class="empty-state">第一篇文章还在准备中。</p>}
+<Pagination section="posts" currentPage={currentPage} totalPages={totalPages} />
